@@ -48,7 +48,7 @@ npm install
      - `http://localhost:3000/auth/callback`
      - `http://localhost:3000/**`
      - `https://your-app.vercel.app/**` (add after deploying)
-5. Copy **https://uiosxznztexirjxpqfzk.supabase.co** and **sb_publishable_qLBTUQLshXfMpLCOUvRdfQ_bJydlQNu** from **Project Settings → API**.
+5. Copy **your-anon-key** and **https://your-project-ref.supabase.co** from **Project Settings → API**.
 
 ### 3. Configure environment
 
