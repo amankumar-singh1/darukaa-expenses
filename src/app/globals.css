@@ -1,26 +1,155 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-cream-50: #fdfbf7;
+  --color-cream-100: #f6f1e7;
+  --color-cream-200: #ece4d4;
+
+  --color-forest-950: #0a1f16;
+  --color-forest-900: #0e2a1d;
+  --color-forest-800: #102810;
+  --color-forest-700: #14402c;
+
+  --color-brand-600: #009245;
+  --color-brand-700: #007b3a;
+  --color-brand-50: #e8f6ee;
+
+  --color-lime-300: #b6f07f;
+  --color-lime-400: #a9ee70;
+
+  --color-ink: #101010;
+
+  --color-danger: #e5484d;
+  --color-danger-50: #fdecec;
+  --color-warning: #febc2e;
+
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo,
+    monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-brand-600) rgba(14, 42, 29, 0.12);
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  html::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  html::-webkit-scrollbar-track {
+    background: rgba(14, 42, 29, 0.08);
+  }
+
+  html::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    background: var(--color-brand-600) padding-box;
+  }
+
+  html::-webkit-scrollbar-thumb:hover {
+    background: var(--color-brand-700) padding-box;
+  }
+
+  html:has(.dashboard-deer) {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html:has(.dashboard-deer)::-webkit-scrollbar {
+    display: none;
+  }
+
+  body {
+    background-color: var(--color-cream-50);
+    color: var(--color-ink);
+  }
+
+  ::selection {
+    background-color: var(--color-lime-300);
+    color: var(--color-forest-900);
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+    -webkit-text-fill-color: var(--color-ink);
+    transition: background-color 9999s ease-out 0s;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@utility eyebrow {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+@utility dot-grid {
+  background-image: radial-gradient(
+    circle,
+    rgb(14 42 29 / 0.14) 1px,
+    transparent 1.2px
+  );
+  background-size: 24px 24px;
+}
+
+@utility dot-grid-light {
+  background-image: radial-gradient(
+    circle,
+    rgb(182 240 127 / 0.2) 1px,
+    transparent 1.2px
+  );
+  background-size: 22px 22px;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.app-shell > * {
+  animation: fade-up 650ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.app-shell > *:nth-child(2) {
+  animation-delay: 70ms;
+}
+
+.app-shell > *:nth-child(3) {
+  animation-delay: 140ms;
+}
+
+.app-shell > *:nth-child(4) {
+  animation-delay: 210ms;
+}
+
+.dashboard-deer {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.app-shell:has(.dashboard-deer) {
+  padding-bottom: 0;
 }
