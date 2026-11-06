@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
-export async function requireUser() {
+export const requireUser = cache(async function requireUser() {
   if (!isSupabaseConfigured()) {
     redirect("/login");
   }
@@ -18,4 +19,4 @@ export async function requireUser() {
   }
 
   return { supabase, user };
-}
+});

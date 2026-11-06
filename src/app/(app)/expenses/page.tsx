@@ -47,13 +47,11 @@ export default async function ExpensesPage({
   const query = (params.q ?? "").trim();
   const categoryFilter = params.category ?? "";
 
-  const { data: categoryRows } = await supabase
+  const categoriesQuery = supabase
     .from("categories")
     .select("id, name, color, is_archived")
     .eq("user_id", user.id)
     .order("name");
-
-  const categories = (categoryRows ?? []) as Category[];
 
   let expensesQuery = supabase
     .from("expenses")
@@ -79,7 +77,11 @@ export default async function ExpensesPage({
     expensesQuery = expensesQuery.eq("category_id", categoryFilter);
   }
 
-  const { data: expenseRows } = await expensesQuery;
+  const [{ data: categoryRows }, { data: expenseRows }] = await Promise.all([
+    categoriesQuery,
+    expensesQuery,
+  ]);
+  const categories = (categoryRows ?? []) as Category[];
   const expenses = (expenseRows ?? []) as unknown as ExpenseRow[];
   const shownTotal = expenses.reduce(
     (sum, expense) => sum + Number(expense.amount_minor),
