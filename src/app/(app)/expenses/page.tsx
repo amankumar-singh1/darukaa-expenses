@@ -1,5 +1,6 @@
 import {
   ChevronRight,
+  Download,
   Plus,
   ReceiptText,
   Search,
@@ -92,13 +93,22 @@ export default async function ExpensesPage({
         title="Expenses"
         description="Search, review, and open any expense to see its invoice proof."
         action={
-          <Link
-            href="/expenses/new"
-            className={buttonVariants({ variant: "primary" })}
-          >
-            <Plus className="h-4 w-4" />
-            Add expense
-          </Link>
+          <>
+            <Link
+              href="/expenses/export"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </Link>
+            <Link
+              href="/expenses/new"
+              className={buttonVariants({ variant: "primary" })}
+            >
+              <Plus className="h-4 w-4" />
+              Add expense
+            </Link>
+          </>
         }
       />
 
