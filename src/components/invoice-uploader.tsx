@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, ImageIcon, Plus, X } from "lucide-react";
+import { CloudUpload, FileText, ImageIcon, X } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -126,9 +126,11 @@ export function InvoiceUploader({
           disabled && "opacity-60",
         )}
       >
-        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-brand-700 shadow-sm">
-          <Plus className="h-5 w-5" />
-        </div>
+        <CloudUpload
+          className="mx-auto mb-3 h-7 w-7 text-brand-700/80"
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
         <p className="text-sm font-semibold text-forest-900">
           Drop invoices here, or choose a file
         </p>
