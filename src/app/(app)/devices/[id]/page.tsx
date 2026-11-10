@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { DeleteDeviceButton } from "@/components/delete-device-button";
 import { DeviceQr } from "@/components/device-qr";
 import { DeviceStatusActions } from "@/components/device-status-actions";
 import { Badge } from "@/components/ui/badge";
@@ -83,13 +84,16 @@ export default async function DevicePage({
           <p className="mt-2 text-sm text-ink/50">{device.type}</p>
         </div>
 
-        <Link
-          href={`/devices/labels?code=${encodeURIComponent(device.code)}`}
-          className={buttonVariants({ variant: "outline" })}
-        >
-          <Printer className="h-4 w-4" />
-          Print label
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <DeleteDeviceButton code={device.code} />
+          <Link
+            href={`/devices/labels?code=${encodeURIComponent(device.code)}`}
+            className={buttonVariants({ variant: "outline" })}
+          >
+            <Printer className="h-4 w-4" />
+            Print label
+          </Link>
+        </div>
       </div>
 
       {device.status === "damaged" && device.note ? (

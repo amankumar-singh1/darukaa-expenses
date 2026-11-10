@@ -15,6 +15,29 @@ type DeviceResult =
 
 type SimpleResult = { ok: true } | { ok: false; error: string };
 
+export async function deleteDevice(code: string): Promise<SimpleResult> {
+  const { supabase, user } = await requireUser();
+
+  const trimmed = (code ?? "").trim().toUpperCase();
+  if (!/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(trimmed)) {
+    return { ok: false, error: "Invalid device reference." };
+  }
+
+  const { error } = await supabase
+    .from("devices")
+    .delete()
+    .eq("code", trimmed)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/devices");
+
+  return { ok: true };
+}
+
 export async function createDevice(input: unknown): Promise<DeviceResult> {
   const { supabase, user } = await requireUser();
   const parsed = deviceSchema.safeParse(input);

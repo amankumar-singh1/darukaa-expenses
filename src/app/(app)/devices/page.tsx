@@ -103,6 +103,13 @@ export default async function DevicesPage({
               <ScanLine className="h-4 w-4" />
               Scan
             </Link>
+            <Link
+              href="/devices/new"
+              className={buttonVariants({ variant: "primary" })}
+            >
+              <Plus className="h-4 w-4" />
+              Add device
+            </Link>
           </>
         }
       />
@@ -173,15 +180,7 @@ export default async function DevicesPage({
                 : "Try a different search or clear the filters."
             }
             action={
-              devices.length === 0 ? (
-                <Link
-                  href="/devices/new"
-                  className={buttonVariants()}
-                >
-                  <Plus className="h-4 w-4" />
-                  Add device
-                </Link>
-              ) : (
+              devices.length === 0 ? undefined : (
                 <Link
                   href="/devices"
                   className={buttonVariants({ variant: "outline", size: "sm" })}
