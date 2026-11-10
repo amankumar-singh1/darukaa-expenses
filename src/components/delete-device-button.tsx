@@ -32,7 +32,9 @@ export function DeleteDeviceButton({ code }: { code: string }) {
     return (
       <Button
         type="button"
-        variant="danger-ghost"
+        variant="outline"
+        size="sm"
+        className="border-danger/30 text-danger hover:bg-danger-50 hover:text-danger"
         onClick={() => setConfirming(true)}
       >
         <Trash2 className="h-4 w-4" />

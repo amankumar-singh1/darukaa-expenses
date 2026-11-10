@@ -1,4 +1,4 @@
-import { ArrowLeft, Printer, QrCode } from "lucide-react";
+import { ArrowLeft, QrCode } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -7,7 +7,6 @@ import { DeleteDeviceButton } from "@/components/delete-device-button";
 import { DeviceQr } from "@/components/device-qr";
 import { DeviceStatusActions } from "@/components/device-status-actions";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
 import {
@@ -86,13 +85,6 @@ export default async function DevicePage({
 
         <div className="flex flex-wrap items-center gap-2">
           <DeleteDeviceButton code={device.code} />
-          <Link
-            href={`/devices/labels?code=${encodeURIComponent(device.code)}`}
-            className={buttonVariants({ variant: "outline" })}
-          >
-            <Printer className="h-4 w-4" />
-            Print label
-          </Link>
         </div>
       </div>
 

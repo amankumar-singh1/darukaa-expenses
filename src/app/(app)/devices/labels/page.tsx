@@ -26,7 +26,7 @@ export default async function DeviceLabelsPage({
 
   let query = supabase
     .from("devices")
-    .select("code, name, type")
+    .select("code")
     .eq("user_id", user.id)
     .order("code")
     .limit(500);
@@ -36,14 +36,22 @@ export default async function DeviceLabelsPage({
   }
 
   const { data } = await query;
-  const devices = (data ?? []) as { code: string; name: string; type: string }[];
+  const devices = (data ?? []) as { code: string }[];
 
   return (
     <>
-      {/* print: show only the label grid */}
+      {/* print: show only the label grid, as fixed-size cut-out cards */}
       <style
         dangerouslySetInnerHTML={{
-          __html: `@media print { body * { visibility: hidden !important; } .print-labels, .print-labels * { visibility: visible !important; } .print-labels { position: absolute; inset: 0; padding: 8mm; } .print-label { break-inside: avoid; } }`,
+          __html: `@media print {
+  aside, header, nav, .dot-grid, .print-hide { display: none !important; }
+  main { padding-left: 0 !important; }
+  .app-shell { padding: 0 !important; min-height: 0 !important; display: block !important; }
+  .print-labels { display: grid !important; grid-template-columns: repeat(auto-fill, 40mm); gap: 6mm; padding: 6mm !important; justify-content: space-evenly; align-content: start; background: #fff !important; }
+  .print-label { width: 40mm !important; height: 40mm !important; break-inside: avoid; page-break-inside: avoid; padding: 2mm !important; gap: 1mm !important; }
+  .print-label img { width: 22mm !important; height: 22mm !important; }
+  .print-label p:last-child { margin-top: -0.75mm; line-height: 1.1; }
+}`,
         }}
       />
 
@@ -83,14 +91,11 @@ export default async function DeviceLabelsPage({
           {devices.map((device) => (
             <div
               key={device.code}
-              className="print-label flex flex-col items-center gap-2 rounded-xl border border-forest-900/15 bg-white px-3 py-4 text-center"
+              className="print-label flex flex-col items-center gap-2 rounded-xl border border-forest-900/15 bg-white py-4 text-center"
             >
               <DeviceQr code={device.code} size={110} />
               <p className="font-mono text-sm font-bold text-forest-900">
                 {device.code}
-              </p>
-              <p className="text-[10px] leading-tight text-ink/55">
-                {device.name} · {device.type}
               </p>
               <p className="text-[8px] uppercase tracking-widest text-ink/35">
                 Darukaa Earth

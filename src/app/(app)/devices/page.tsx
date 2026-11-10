@@ -9,6 +9,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AutoSubmitThemedSelect } from "@/components/auto-submit-themed-select";
+import { deviceTypeIcon } from "@/components/device-type-icon";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -193,68 +194,89 @@ export default async function DevicesPage({
         ) : (
           <>
             <div className="hidden overflow-hidden rounded-t-2xl md:block">
-              <table className="w-full text-left">
+              <table className="w-full table-fixed text-left">
                 <thead>
                   <tr className="border-b border-forest-900/8 bg-cream-50/60 text-[10px] uppercase tracking-[0.14em] text-ink/40">
-                    <th className="px-5 py-3 font-semibold">Device ID</th>
-                    <th className="px-5 py-3 font-semibold">Name</th>
-                    <th className="px-5 py-3 font-semibold">Type</th>
-                    <th className="px-5 py-3 font-semibold">Status</th>
-                    <th className="w-10 px-3 py-3" />
+                    <th className="w-16 px-3 py-3" />
+                    <th className="px-5 py-3 text-center font-semibold">Device ID</th>
+                    <th className="px-5 py-3 text-center font-semibold">Name</th>
+                    <th className="px-5 py-3 text-center font-semibold">Type</th>
+                    <th className="px-5 py-3 text-center font-semibold">Status</th>
+                    <th className="w-12 px-3 py-3" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-forest-900/8">
-                  {filtered.map((device) => (
+                  {filtered.map((device) => {
+                    const Icon = deviceTypeIcon(device.type);
+                    return (
                     <tr
                       key={device.code}
-                      className="group transition hover:bg-cream-50"
+                      className="group relative cursor-pointer transition hover:bg-cream-50"
                     >
-                      <td className="whitespace-nowrap px-5 py-3.5 font-mono text-xs font-semibold text-forest-900">
-                        {device.code}
+                      <td className="w-16 px-3 py-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+                          <Icon className="h-4 w-4" />
+                        </div>
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="truncate px-5 py-3.5 text-center font-mono text-xs font-semibold text-forest-900">
                         <Link
                           href={`/devices/${device.code}`}
-                          className="block max-w-xs truncate text-sm font-semibold text-forest-900 group-hover:text-brand-700"
+                          aria-label={`Open ${device.name}`}
+                          className="absolute inset-0"
+                        >
+                          <span className="sr-only">Open {device.name}</span>
+                        </Link>
+                        {device.code}
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        <Link
+                          href={`/devices/${device.code}`}
+                          className="mx-auto block max-w-xs truncate text-sm font-semibold text-forest-900 group-hover:text-brand-700"
                         >
                           {device.name}
                         </Link>
                         {device.note && device.status === "damaged" ? (
-                          <p className="mt-0.5 max-w-xs truncate text-[11px] text-danger">
+                          <p className="mx-auto mt-0.5 max-w-xs truncate text-[11px] text-danger">
                             {device.note}
                           </p>
                         ) : null}
                       </td>
-                      <td className="px-5 py-3.5 text-sm text-ink/55">
+                      <td className="truncate px-5 py-3.5 text-center text-sm text-ink/55">
                         {device.type}
                       </td>
-                      <td className="px-5 py-3.5">
+                      <td className="px-5 py-3.5 text-center whitespace-nowrap">
                         <Badge variant={STATUS_BADGE[device.status as DeviceStatus]}>
                           {DEVICE_STATUS_LABELS[device.status as DeviceStatus] ?? device.status}
                         </Badge>
                       </td>
-                      <td className="px-3 py-3.5">
+                      <td className="w-12 px-3 py-3.5">
                         <Link
                           href={`/devices/${device.code}`}
                           aria-label={`Open ${device.name}`}
-                          className="flex h-7 w-7 items-center justify-center rounded-md text-ink/30 transition group-hover:bg-white group-hover:text-forest-900"
+                          className="relative z-10 flex h-7 w-7 items-center justify-center rounded-md text-ink/30 transition group-hover:bg-white group-hover:text-forest-900"
                         >
                           <ChevronRight className="h-4 w-4" />
                         </Link>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             <ul className="divide-y divide-forest-900/8 md:hidden">
-              {filtered.map((device) => (
+              {filtered.map((device) => {
+                const Icon = deviceTypeIcon(device.type);
+                return (
                 <li key={device.code}>
                   <Link
                     href={`/devices/${device.code}`}
                     className="flex items-center gap-3 px-4 py-4 transition active:bg-cream-50"
                   >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+                      <Icon className="h-4 w-4" />
+                    </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-forest-900">
                         {device.name}
@@ -271,7 +293,8 @@ export default async function DevicesPage({
                     <ChevronRight className="h-4 w-4 shrink-0 text-ink/25" />
                   </Link>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </>
         )}
