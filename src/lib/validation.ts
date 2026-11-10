@@ -103,6 +103,69 @@ export const categorySchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/, "Choose a valid colour"),
 });
 
+export const DEVICE_TYPES = [
+  "AudioMoth",
+  "HydroMoth",
+  "Camera Trap",
+  "Environmental Sensor",
+  "GPS Unit",
+  "SD Card",
+  "Battery Pack",
+  "Other",
+] as const;
+
+export const DEVICE_STATUSES = ["available", "occupied", "damaged"] as const;
+
+export type DeviceStatus = (typeof DEVICE_STATUSES)[number];
+
+export const DEVICE_TYPE_OPTIONS = DEVICE_TYPES.map((type) => ({
+  value: type,
+  label: type,
+}));
+
+export const DEVICE_STATUS_LABELS: Record<DeviceStatus, string> = {
+  available: "Available",
+  occupied: "Occupied",
+  damaged: "Damaged",
+};
+
+export const DEVICE_STATUS_OPTIONS = [
+  { value: "", label: "All statuses" },
+  ...DEVICE_STATUSES.map((status) => ({
+    value: status,
+    label: DEVICE_STATUS_LABELS[status],
+  })),
+];
+
+export const deviceSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(2, "Device ID must be at least 2 characters")
+    .max(40, "Device ID is too long")
+    .regex(
+      /^[A-Za-z0-9][A-Za-z0-9_-]*$/,
+      "Use letters, numbers, dashes, or underscores",
+    )
+    .transform((value) => value.toUpperCase()),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Give the device a name")
+    .max(120, "Name is too long"),
+  type: z
+    .string()
+    .trim()
+    .min(1, "Choose or enter a device type")
+    .max(60, "Type is too long"),
+});
+
+export const deviceStatusSchema = z.object({
+  code: z.string().trim().min(1).max(40),
+  status: z.enum(DEVICE_STATUSES),
+  note: optionalText(500),
+});
+
 export const profileSchema = z.object({
   fullName: z
     .string()
