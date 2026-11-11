@@ -43,3 +43,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local planning / assistant notes (keep out of the repo)
+AGENTS.md
+CONTEXT.md
+INTEGRATION-PLAN.md
+PLAN.md
