@@ -7,11 +7,35 @@ import { toast } from "sonner";
 
 import { deleteDevice } from "@/app/(app)/devices/actions";
 import { Button } from "@/components/ui/button";
+import type { DeviceStatus } from "@/lib/validation";
 
-export function DeleteDeviceButton({ code }: { code: string }) {
+export function DeleteDeviceButton({
+  code,
+  status,
+}: {
+  code: string;
+  status: DeviceStatus;
+}) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [pending, setPending] = useState(false);
+
+  // Only an available device can be deleted.
+  if (status !== "available") {
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled
+        title="Mark the device available before deleting it"
+        className="border-danger/30 text-danger"
+      >
+        <Trash2 className="h-4 w-4" />
+        Delete
+      </Button>
+    );
+  }
 
   async function handleDelete() {
     setPending(true);

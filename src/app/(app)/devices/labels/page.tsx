@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { DeviceQr } from "@/components/device-qr";
+import { Logo } from "@/components/logo";
 import { PrintButton } from "@/components/print-button";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
@@ -49,8 +50,8 @@ export default async function DeviceLabelsPage({
   .app-shell { padding: 0 !important; min-height: 0 !important; display: block !important; }
   .print-labels { display: grid !important; grid-template-columns: repeat(auto-fill, 40mm); gap: 6mm; padding: 6mm !important; justify-content: space-evenly; align-content: start; background: #fff !important; }
   .print-label { width: 40mm !important; height: 40mm !important; break-inside: avoid; page-break-inside: avoid; padding: 2mm !important; gap: 1mm !important; }
-  .print-label img { width: 22mm !important; height: 22mm !important; }
-  .print-label p:last-child { margin-top: -0.75mm; line-height: 1.1; }
+  .print-label img:first-of-type { width: 22mm !important; height: 22mm !important; }
+  .print-label img:last-of-type { width: 20mm !important; height: auto !important; }
 }`,
         }}
       />
@@ -97,9 +98,7 @@ export default async function DeviceLabelsPage({
               <p className="font-mono text-sm font-bold text-forest-900">
                 {device.code}
               </p>
-              <p className="text-[8px] uppercase tracking-widest text-ink/35">
-                Darukaa Earth
-              </p>
+              <Logo variant="dark" width={64} />
             </div>
           ))}
         </div>

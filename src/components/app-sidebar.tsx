@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  ChevronDown,
+  FolderKanban,
   LayoutDashboard,
   Plus,
   Printer,
@@ -12,9 +14,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 import { Logo } from "@/components/logo";
-import { SignOutButton } from "@/components/sign-out-button";
 import { cn, initials } from "@/lib/utils";
 
 const NAV_SECTIONS = [
@@ -33,6 +35,10 @@ const NAV_SECTIONS = [
       { href: "/devices/scan", label: "Scan Device", icon: ScanLine },
       { href: "/devices/labels", label: "QR Labels", icon: Printer },
     ],
+  },
+  {
+    label: "Projects",
+    items: [{ href: "/projects", label: "Projects", icon: FolderKanban }],
   },
   {
     label: null,
@@ -98,7 +104,7 @@ function NavLink({
 const MOBILE_LEFT = NAV_SECTIONS[0].items.slice(0, 2);
 const MOBILE_RIGHT = [
   NAV_SECTIONS[1].items[0],
-  NAV_SECTIONS[2].items[0],
+  NAV_SECTIONS[3].items[0],
 ] as const;
 
 export function AppSidebar({
@@ -110,6 +116,20 @@ export function AppSidebar({
 }) {
   const pathname = usePathname();
   const active = activeHref(pathname);
+  const navRef = useRef<HTMLElement>(null);
+  const [moreBelow, setMoreBelow] = useState(false);
+
+  // Show the "more below" arrow only while the nav still has content to scroll.
+  useEffect(() => {
+    const update = () => {
+      const el = navRef.current;
+      if (!el) return;
+      setMoreBelow(el.scrollTop + el.clientHeight < el.scrollHeight - 4);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   return (
     <>
@@ -118,7 +138,16 @@ export function AppSidebar({
           <Logo variant="white" width={132} />
         </div>
 
-        <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
+        <div className="relative min-h-0 flex-1">
+          <nav
+            ref={navRef}
+            onScroll={() => {
+              const el = navRef.current;
+              if (!el) return;
+              setMoreBelow(el.scrollTop + el.clientHeight < el.scrollHeight - 4);
+            }}
+            className="h-full space-y-5 overflow-y-auto px-3 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
           {NAV_SECTIONS.map((section, sectionIndex) => (
             <div
               key={section.label ?? sectionIndex}
@@ -143,10 +172,29 @@ export function AppSidebar({
               ))}
             </div>
           ))}
-        </nav>
+          </nav>
+
+          {moreBelow ? (
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center bg-gradient-to-t from-forest-900 via-forest-900/80 to-transparent pb-1 pt-6">
+              <button
+                type="button"
+                onClick={() =>
+                  navRef.current?.scrollTo({
+                    top: navRef.current.scrollHeight,
+                    behavior: "smooth",
+                  })
+                }
+                aria-label="Scroll navigation to the bottom"
+                className="pointer-events-auto flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-white/70 transition hover:bg-white/20 hover:text-white"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </button>
+            </div>
+          ) : null}
+        </div>
 
         <div className="mt-2 border-t border-white/10 p-4">
-          <div className="mb-3 flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-lime-300 text-xs font-bold text-forest-900">
               {initials(name, email)}
             </div>
@@ -157,7 +205,6 @@ export function AppSidebar({
               <p className="truncate text-[11px] text-white/45">{email}</p>
             </div>
           </div>
-          <SignOutButton className="w-full text-white/60 hover:bg-white/10 hover:text-white" />
         </div>
       </aside>
 

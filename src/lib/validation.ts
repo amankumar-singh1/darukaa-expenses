@@ -137,6 +137,14 @@ export const DEVICE_STATUS_OPTIONS = [
   })),
 ];
 
+export const projectSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Give the project a name")
+    .max(80, "Project name is too long"),
+});
+
 export const deviceSchema = z.object({
   code: z
     .string()
@@ -148,22 +156,19 @@ export const deviceSchema = z.object({
       "Use letters, numbers, dashes, or underscores",
     )
     .transform((value) => value.toUpperCase()),
-  name: z
-    .string()
-    .trim()
-    .min(1, "Give the device a name")
-    .max(120, "Name is too long"),
   type: z
     .string()
     .trim()
     .min(1, "Choose or enter a device type")
     .max(60, "Type is too long"),
+  projectId: z.string().uuid().nullable().optional(),
 });
 
 export const deviceStatusSchema = z.object({
   code: z.string().trim().min(1).max(40),
   status: z.enum(DEVICE_STATUSES),
-  note: optionalText(500),
+  note: optionalText(100),
+  projectId: z.string().uuid().nullable().optional(),
 });
 
 export const profileSchema = z.object({

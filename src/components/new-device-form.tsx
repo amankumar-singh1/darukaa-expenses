@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2, Plus } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -13,22 +14,36 @@ import { Label } from "@/components/ui/label";
 import { ThemedSelect } from "@/components/themed-select";
 import { DEVICE_TYPE_OPTIONS } from "@/lib/validation";
 
-export function NewDeviceForm() {
+export function NewDeviceForm({
+  projects,
+}: {
+  projects: { id: string; name: string }[];
+}) {
   const router = useRouter();
   const [code, setCode] = useState("");
-  const [name, setName] = useState("");
   const [type, setType] = useState("");
   const [customType, setCustomType] = useState("");
+  const [deployed, setDeployed] = useState(false);
+  const [projectId, setProjectId] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setPending(true);
 
+    if (deployed && !projectId) {
+      setError("Choose the project where the device is already deployed.");
+      return;
+    }
+
+    setPending(true);
     const finalType = type === "Other" ? customType.trim() : type;
-    const result = await createDevice({ code, name, type: finalType });
+    const result = await createDevice({
+      code,
+      type: finalType,
+      projectId: deployed ? projectId : null,
+    });
     setPending(false);
 
     if (!result.ok) {
@@ -61,16 +76,6 @@ export function NewDeviceForm() {
           </div>
 
           <div>
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="AudioMoth #1 (green case)"
-            />
-          </div>
-
-          <div>
             <Label htmlFor="type">Type</Label>
             <ThemedSelect
               id="type"
@@ -88,6 +93,54 @@ export function NewDeviceForm() {
                   placeholder="What kind of device is it?"
                   aria-label="Custom device type"
                 />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="rounded-xl border border-forest-900/10 bg-cream-50/60 p-4">
+            <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-forest-900">
+              <input
+                type="checkbox"
+                checked={deployed}
+                onChange={(event) => {
+                  setDeployed(event.target.checked);
+                  if (!event.target.checked) setProjectId("");
+                }}
+                className="h-4 w-4 accent-brand-600"
+              />
+              Already deployed?
+            </label>
+            <p className="mt-1 pl-6 text-xs text-ink/60">
+              Tick this if the device is already out in the field. It will be
+              saved as Occupied at the project you pick.
+            </p>
+
+            {deployed ? (
+              <div className="mt-3">
+                {projects.length === 0 ? (
+                  <p className="text-xs text-ink/60">
+                    No projects yet.{" "}
+                    <Link href="/projects" className="font-semibold text-brand-700">
+                      Add a project
+                    </Link>{" "}
+                    first.
+                  </p>
+                ) : (
+                  <>
+                    <Label htmlFor="project">Project</Label>
+                    <ThemedSelect
+                      id="project"
+                      value={projectId}
+                      onChange={setProjectId}
+                      options={projects.map((project) => ({
+                        value: project.id,
+                        label: project.name,
+                      }))}
+                      placeholder="Select project"
+                      ariaLabel="Project"
+                    />
+                  </>
+                )}
               </div>
             ) : null}
           </div>

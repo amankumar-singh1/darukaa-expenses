@@ -118,7 +118,7 @@ export default async function SettingsPage({
               </div>
               <SignOutButton
                 variant="outline"
-                className="w-full justify-center"
+                className="w-full justify-center border-danger/30 text-danger hover:bg-danger-50 hover:text-danger"
               />
             </CardContent>
           </Card>

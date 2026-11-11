@@ -1,4 +1,4 @@
-import { ArrowLeft, QrCode } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,6 +9,7 @@ import { DeviceStatusActions } from "@/components/device-status-actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
+import { embeddedName } from "@/lib/utils";
 import {
   DEVICE_STATUS_LABELS,
   type DeviceStatus,
@@ -37,7 +38,7 @@ export default async function DevicePage({
 
   const { data } = await supabase
     .from("devices")
-    .select("code, name, type, status, note, created_at, updated_at")
+    .select("code, type, status, note, project_id, created_at, updated_at, projects(name)")
     .eq("code", code)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -46,15 +47,26 @@ export default async function DevicePage({
     notFound();
   }
 
+  const { data: projectData } = await supabase
+    .from("projects")
+    .select("id, name")
+    .eq("user_id", user.id)
+    .order("name");
+
+  const projects = (projectData ?? []) as { id: string; name: string }[];
+
   const device = data as {
     code: string;
-    name: string;
     type: string;
     status: DeviceStatus;
     note: string | null;
+    project_id: string | null;
+    projects: unknown;
     created_at: string;
     updated_at: string;
   };
+
+  const projectName = embeddedName(device.projects);
 
   return (
     <>
@@ -69,22 +81,30 @@ export default async function DevicePage({
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            <Badge variant="outline">
-              <QrCode className="h-3 w-3" />
-              <span className="font-mono">{device.code}</span>
-            </Badge>
             <Badge variant={STATUS_BADGE[device.status] ?? "default"}>
               {DEVICE_STATUS_LABELS[device.status] ?? device.status}
             </Badge>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-forest-900 md:text-3xl">
-            {device.name}
+          <h1 className="font-mono text-2xl font-bold tracking-tight text-forest-900 md:text-3xl">
+            {device.code}
           </h1>
           <p className="mt-2 text-sm text-ink/50">{device.type}</p>
+          <p className="mt-1 text-sm text-ink/50">
+            {projectName ? (
+              <>
+                Deployed at{" "}
+                <span className="font-semibold text-forest-900">
+                  {projectName}
+                </span>
+              </>
+            ) : (
+              "Not deployed at any project"
+            )}
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <DeleteDeviceButton code={device.code} />
+          <DeleteDeviceButton code={device.code} status={device.status} />
         </div>
       </div>
 
@@ -103,7 +123,12 @@ export default async function DevicePage({
             <CardTitle>Update status</CardTitle>
           </CardHeader>
           <CardContent>
-            <DeviceStatusActions code={device.code} status={device.status} />
+            <DeviceStatusActions
+              code={device.code}
+              status={device.status}
+              projectId={device.project_id}
+              projects={projects}
+            />
             <p className="mt-4 text-xs text-ink/60">
               Occupied = out in the field · Available = back in the office ·
               Damaged = needs repair

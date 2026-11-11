@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -8,27 +9,39 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ThemedSelect } from "@/components/themed-select";
 import { updateDeviceStatus } from "@/app/(app)/devices/actions";
 import type { DeviceStatus } from "@/lib/validation";
 
 export function DeviceStatusActions({
   code,
   status,
+  projectId,
+  projects,
 }: {
   code: string;
   status: DeviceStatus;
+  projectId: string | null;
+  projects: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const [showDamage, setShowDamage] = useState(false);
   const [note, setNote] = useState("");
+  const [selected, setSelected] = useState(projectId ?? "");
   const [pending, setPending] = useState<DeviceStatus | null>(null);
 
   async function setStatus(next: DeviceStatus, damageNote?: string) {
+    if (next === "occupied" && !selected) {
+      toast.error("Choose the project where this device is deployed.");
+      return;
+    }
+
     setPending(next);
     const result = await updateDeviceStatus({
       code,
       status: next,
       note: damageNote,
+      projectId: next === "occupied" ? selected : null,
     });
     setPending(null);
 
@@ -37,11 +50,13 @@ export function DeviceStatusActions({
       return;
     }
 
+    const projectName = projects.find((project) => project.id === selected)?.name;
+
     setShowDamage(false);
     setNote("");
     toast.success(
       next === "occupied"
-        ? "Device marked occupied — out in the field."
+        ? `Device marked occupied at ${projectName ?? "the project"}.`
         : next === "available"
           ? "Device marked available — back in the office."
           : "Device marked damaged.",
@@ -59,19 +74,46 @@ export function DeviceStatusActions({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {status !== "occupied" ? (
-          <Button
-            onClick={() => setStatus("occupied")}
-            disabled={pending !== null}
-          >
-            {pending === "occupied" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : null}
-            Mark occupied
-          </Button>
-        ) : null}
+      {status !== "occupied" ? (
+        projects.length === 0 ? (
+          <p className="rounded-xl border border-forest-900/10 bg-cream-50/60 px-4 py-3 text-xs text-ink/60">
+            No projects yet.{" "}
+            <Link href="/projects" className="font-semibold text-brand-700">
+              Add a project
+            </Link>{" "}
+            before marking a device occupied.
+          </p>
+        ) : (
+          <div className="rounded-xl border border-forest-900/10 bg-cream-50/60 p-4">
+            <Label>Project</Label>
+            <div className="mt-1.5 flex flex-col gap-2 sm:flex-row">
+              <ThemedSelect
+                value={selected}
+                onChange={setSelected}
+                options={projects.map((project) => ({
+                  value: project.id,
+                  label: project.name,
+                }))}
+                placeholder="Where is it deployed?"
+                ariaLabel="Project"
+                className="flex-1"
+              />
+              <Button
+                onClick={() => setStatus("occupied")}
+                disabled={pending !== null}
+                className="shrink-0"
+              >
+                {pending === "occupied" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : null}
+                Mark occupied
+              </Button>
+            </div>
+          </div>
+        )
+      ) : null}
 
+      <div className="flex flex-wrap gap-2">
         {status !== "available" ? (
           <Button
             variant="outline"
@@ -88,6 +130,7 @@ export function DeviceStatusActions({
         {status !== "damaged" ? (
           <Button
             variant="danger-ghost"
+            className="border border-danger/30"
             onClick={() => setShowDamage((open) => !open)}
             disabled={pending !== null}
           >
@@ -105,7 +148,9 @@ export function DeviceStatusActions({
             onChange={(event) => setNote(event.target.value)}
             placeholder="e.g. housing cracked, mic torn during retrieval"
             rows={3}
+            maxLength={100}
           />
+          <p className="text-xs text-ink/50">Describe within 100 characters.</p>
           <Button
             variant="danger"
             size="sm"

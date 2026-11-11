@@ -23,6 +23,24 @@ export async function deleteDevice(code: string): Promise<SimpleResult> {
     return { ok: false, error: "Invalid device reference." };
   }
 
+  const { data: device } = await supabase
+    .from("devices")
+    .select("status")
+    .eq("code", trimmed)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!device) {
+    return { ok: false, error: "Device not found." };
+  }
+
+  if (device.status !== "available") {
+    return {
+      ok: false,
+      error: "Mark the device available before deleting it.",
+    };
+  }
+
   const { error } = await supabase
     .from("devices")
     .delete()
@@ -53,9 +71,9 @@ export async function createDevice(input: unknown): Promise<DeviceResult> {
   const { error } = await supabase.from("devices").insert({
     code: data.code,
     user_id: user.id,
-    name: data.name,
     type: data.type,
-    status: "available",
+    status: data.projectId ? "occupied" : "available",
+    project_id: data.projectId ?? null,
   });
 
   if (error) {
@@ -69,6 +87,7 @@ export async function createDevice(input: unknown): Promise<DeviceResult> {
   }
 
   revalidatePath("/devices");
+  revalidatePath("/projects");
 
   return { ok: true, code: data.code };
 }
@@ -85,12 +104,23 @@ export async function updateDeviceStatus(input: unknown): Promise<SimpleResult> 
   }
 
   const data = parsed.data;
+
+  if (data.status === "occupied" && !data.projectId) {
+    return { ok: false, error: "Choose the project where this device is deployed." };
+  }
+
+  const patch: Record<string, unknown> = {
+    status: data.status as DeviceStatus,
+    note: data.note,
+  };
+
+  // Occupied points at a project; available detaches it; damaged keeps it.
+  if (data.status === "occupied") patch.project_id = data.projectId;
+  if (data.status === "available") patch.project_id = null;
+
   const { error } = await supabase
     .from("devices")
-    .update({
-      status: data.status as DeviceStatus,
-      note: data.note,
-    })
+    .update(patch)
     .eq("code", data.code)
     .eq("user_id", user.id);
 
@@ -100,6 +130,7 @@ export async function updateDeviceStatus(input: unknown): Promise<SimpleResult> 
 
   revalidatePath("/devices");
   revalidatePath(`/devices/${data.code}`);
+  revalidatePath("/projects");
 
   return { ok: true };
 }

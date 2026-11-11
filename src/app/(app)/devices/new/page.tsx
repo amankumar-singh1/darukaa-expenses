@@ -4,12 +4,23 @@ import Link from "next/link";
 
 import { NewDeviceForm } from "@/components/new-device-form";
 import { PageHeader } from "@/components/page-header";
+import { requireUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Add device",
 };
 
-export default function NewDevicePage() {
+export default async function NewDevicePage() {
+  const { supabase, user } = await requireUser();
+
+  const { data } = await supabase
+    .from("projects")
+    .select("id, name")
+    .eq("user_id", user.id)
+    .order("name");
+
+  const projects = (data ?? []) as { id: string; name: string }[];
+
   return (
     <>
       <Link
@@ -26,7 +37,7 @@ export default function NewDevicePage() {
         description="Register a device, print its QR label, and stick the label on the hardware. The QR opens this device's page when scanned."
       />
 
-      <NewDeviceForm />
+      <NewDeviceForm projects={projects} />
     </>
   );
 }

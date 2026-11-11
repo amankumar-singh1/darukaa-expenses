@@ -17,6 +17,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { requireUser } from "@/lib/auth";
+import { embeddedName } from "@/lib/utils";
 import {
   DEVICE_STATUS_LABELS,
   DEVICE_STATUS_OPTIONS,
@@ -32,10 +33,10 @@ export const dynamic = "force-dynamic";
 
 type DeviceRow = {
   code: string;
-  name: string;
   type: string;
   status: string;
   note: string | null;
+  projects: unknown;
 };
 
 const STATUS_BADGE: Record<DeviceStatus, "green" | "lime" | "danger"> = {
@@ -56,7 +57,7 @@ export default async function DevicesPage({
 
   const { data } = await supabase
     .from("devices")
-    .select("code, name, type, status, note")
+    .select("code, type, status, note, projects(name)")
     .eq("user_id", user.id)
     .order("code")
     .limit(500);
@@ -74,7 +75,6 @@ export default async function DevicesPage({
     if (
       query &&
       !device.code.includes(query) &&
-      !device.name.toLowerCase().includes(query.toLowerCase()) &&
       !device.type.toLowerCase().includes(query.toLowerCase())
     ) {
       return false;
@@ -149,7 +149,7 @@ export default async function DevicesPage({
           <Input
             name="q"
             defaultValue={params.q ?? ""}
-            placeholder="Search by ID, name, or type"
+            placeholder="Search by ID or type"
             className="pl-9"
             aria-label="Search devices"
           />
@@ -197,12 +197,12 @@ export default async function DevicesPage({
               <table className="w-full table-fixed text-left">
                 <thead>
                   <tr className="border-b border-forest-900/8 bg-cream-50/60 text-[10px] uppercase tracking-[0.14em] text-ink/40">
-                    <th className="w-16 px-3 py-3" />
+                    <th className="w-20 px-3 py-3" />
                     <th className="px-5 py-3 text-center font-semibold">Device ID</th>
-                    <th className="px-5 py-3 text-center font-semibold">Name</th>
                     <th className="px-5 py-3 text-center font-semibold">Type</th>
+                    <th className="px-5 py-3 text-center font-semibold">Project</th>
                     <th className="px-5 py-3 text-center font-semibold">Status</th>
-                    <th className="w-12 px-3 py-3" />
+                    <th className="w-20 px-3 py-3" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-forest-900/8">
@@ -213,28 +213,23 @@ export default async function DevicesPage({
                       key={device.code}
                       className="group relative cursor-pointer transition hover:bg-cream-50"
                     >
-                      <td className="w-16 px-3 py-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+                      <td className="w-20 py-3 pl-5 pr-2 text-center">
+                        <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
                           <Icon className="h-4 w-4" />
                         </div>
                       </td>
                       <td className="truncate px-5 py-3.5 text-center font-mono text-xs font-semibold text-forest-900">
                         <Link
                           href={`/devices/${device.code}`}
-                          aria-label={`Open ${device.name}`}
+                          aria-label={`Open ${device.code}`}
                           className="absolute inset-0"
                         >
-                          <span className="sr-only">Open {device.name}</span>
+                          <span className="sr-only">Open {device.code}</span>
                         </Link>
                         {device.code}
                       </td>
                       <td className="px-5 py-3.5 text-center">
-                        <Link
-                          href={`/devices/${device.code}`}
-                          className="mx-auto block max-w-xs truncate text-sm font-semibold text-forest-900 group-hover:text-brand-700"
-                        >
-                          {device.name}
-                        </Link>
+                        <p className="truncate text-sm text-ink/55">{device.type}</p>
                         {device.note && device.status === "damaged" ? (
                           <p className="mx-auto mt-0.5 max-w-xs truncate text-[11px] text-danger">
                             {device.note}
@@ -242,18 +237,18 @@ export default async function DevicesPage({
                         ) : null}
                       </td>
                       <td className="truncate px-5 py-3.5 text-center text-sm text-ink/55">
-                        {device.type}
+                        {embeddedName(device.projects) ?? "—"}
                       </td>
                       <td className="px-5 py-3.5 text-center whitespace-nowrap">
                         <Badge variant={STATUS_BADGE[device.status as DeviceStatus]}>
                           {DEVICE_STATUS_LABELS[device.status as DeviceStatus] ?? device.status}
                         </Badge>
                       </td>
-                      <td className="w-12 px-3 py-3.5">
+                      <td className="w-20 py-3.5 pl-2 pr-5 text-center">
                         <Link
                           href={`/devices/${device.code}`}
-                          aria-label={`Open ${device.name}`}
-                          className="relative z-10 flex h-7 w-7 items-center justify-center rounded-md text-ink/30 transition group-hover:bg-white group-hover:text-forest-900"
+                          aria-label={`Open ${device.code}`}
+                          className="relative z-10 inline-flex h-7 w-7 items-center justify-center rounded-md text-ink/30 transition group-hover:bg-white group-hover:text-forest-900"
                         >
                           <ChevronRight className="h-4 w-4" />
                         </Link>
@@ -268,6 +263,7 @@ export default async function DevicesPage({
             <ul className="divide-y divide-forest-900/8 md:hidden">
               {filtered.map((device) => {
                 const Icon = deviceTypeIcon(device.type);
+                const project = embeddedName(device.projects);
                 return (
                 <li key={device.code}>
                   <Link
@@ -278,14 +274,17 @@ export default async function DevicesPage({
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-forest-900">
-                        {device.name}
-                      </p>
-                      <p className="mt-1 flex items-center gap-2 font-mono text-[11px] text-ink/45">
+                      <p className="truncate font-mono text-sm font-semibold text-forest-900">
                         {device.code}
-                        <span className="h-1 w-1 rounded-full bg-ink/20" />
+                      </p>
+                      <p className="mt-1 truncate text-[11px] text-ink/45">
                         {device.type}
                       </p>
+                      {project ? (
+                        <p className="mt-0.5 truncate text-[11px] font-medium text-brand-700">
+                          {project}
+                        </p>
+                      ) : null}
                     </div>
                     <Badge variant={STATUS_BADGE[device.status as DeviceStatus]}>
                       {DEVICE_STATUS_LABELS[device.status as DeviceStatus] ?? device.status}

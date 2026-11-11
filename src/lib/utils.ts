@@ -24,3 +24,10 @@ export function firstName(name?: string | null, email?: string | null) {
 
   return email?.split("@")[0] ?? "there";
 }
+
+// A to-one embed comes back as an object at runtime, but the untyped Supabase
+// client types it as an array — accept both.
+export function embeddedName(value: unknown): string | null {
+  const first = Array.isArray(value) ? value[0] : value;
+  return (first as { name?: string } | null)?.name ?? null;
+}
