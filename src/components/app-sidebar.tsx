@@ -208,8 +208,20 @@ export function AppSidebar({
         </div>
       </aside>
 
-      <header className="sticky top-0 z-30 flex h-16 items-center border-b border-forest-900/10 bg-cream-50/90 px-4 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-forest-900/10 bg-cream-50/90 px-4 backdrop-blur md:hidden">
         <Logo width={112} />
+        <Link
+          href="/projects"
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition",
+            pathname.startsWith("/projects")
+              ? "bg-brand-50 text-brand-700"
+              : "text-forest-900/60",
+          )}
+        >
+          <FolderKanban className="h-4 w-4" />
+          Projects
+        </Link>
       </header>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 flex items-end justify-around border-t border-forest-900/10 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 backdrop-blur md:hidden">
