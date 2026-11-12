@@ -42,8 +42,14 @@ export function ThemedSelect({
     const update = () => {
       const rect = buttonRef.current?.getBoundingClientRect();
       if (!rect) return;
+      const estimatedHeight = Math.min(256, options.length * 40 + 8);
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUp = spaceBelow < estimatedHeight && rect.top > spaceBelow;
       setCoords({
-        top: rect.bottom + 8,
+        top: Math.max(
+          8,
+          openUp ? rect.top - estimatedHeight - 8 : rect.bottom + 8,
+        ),
         left: rect.left,
         width: rect.width,
       });
@@ -67,7 +73,7 @@ export function ThemedSelect({
       window.removeEventListener("scroll", onScrollOrResize, true);
       window.removeEventListener("resize", update);
     };
-  }, [open]);
+  }, [open, options.length]);
 
   useEffect(() => {
     if (!open) return;

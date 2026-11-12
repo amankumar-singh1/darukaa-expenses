@@ -1,10 +1,11 @@
-import { ChevronRight, FolderKanban } from "lucide-react";
+import { ChevronRight, FolderKanban, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 import { createProject } from "./actions";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,12 +40,41 @@ export default async function ProjectsPage({
 
   const projects = (data ?? []) as ProjectRow[];
 
+  // Count only people still with us — a past leaving date means they are gone.
+  const { data: employeeData } = await supabase
+    .from("employees")
+    .select("project_id, leaves_on")
+    .eq("user_id", user.id);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const headcount = new Map<string, number>();
+  for (const employee of (employeeData ?? []) as {
+    project_id: string | null;
+    leaves_on: string | null;
+  }[]) {
+    if (!employee.project_id) continue;
+    if (employee.leaves_on && employee.leaves_on < today) continue;
+    headcount.set(
+      employee.project_id,
+      (headcount.get(employee.project_id) ?? 0) + 1,
+    );
+  }
+
   return (
     <>
       <PageHeader
         eyebrow="Operations"
         title="Projects"
         description="The sites your devices get deployed to. Add a project here, then pick it when you mark a device occupied."
+        action={
+          <Link
+            href="/employees"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            <Users className="h-3.5 w-3.5" />
+            Employees
+          </Link>
+        }
       />
 
       {params.error ? (
@@ -82,6 +112,7 @@ export default async function ProjectsPage({
           <ul className="divide-y divide-forest-900/8">
             {projects.map((project) => {
               const count = project.devices?.[0]?.count ?? 0;
+              const people = headcount.get(project.id) ?? 0;
               return (
                 <li key={project.id}>
                   <Link
@@ -96,7 +127,8 @@ export default async function ProjectsPage({
                         {project.name}
                       </p>
                       <p className="mt-0.5 text-[11px] text-ink/45">
-                        {count} {count === 1 ? "device" : "devices"}
+                        {count} {count === 1 ? "device" : "devices"} ·{" "}
+                        {people} {people === 1 ? "person" : "people"}
                       </p>
                     </div>
                     <ChevronRight className="h-4 w-4 shrink-0 text-ink/25" />

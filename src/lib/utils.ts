@@ -27,7 +27,19 @@ export function firstName(name?: string | null, email?: string | null) {
 
 // A to-one embed comes back as an object at runtime, but the untyped Supabase
 // client types it as an array — accept both.
-export function embeddedName(value: unknown): string | null {
+export function embeddedOne<T>(value: unknown): T | null {
   const first = Array.isArray(value) ? value[0] : value;
-  return (first as { name?: string } | null)?.name ?? null;
+  return (first as T | null) ?? null;
+}
+
+export function embeddedName(value: unknown): string | null {
+  return embeddedOne<{ name?: string }>(value)?.name ?? null;
+}
+
+export function formatDay(value: string) {
+  return new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }

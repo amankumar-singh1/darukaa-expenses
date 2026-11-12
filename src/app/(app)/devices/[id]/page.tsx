@@ -4,12 +4,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { DeleteDeviceButton } from "@/components/delete-device-button";
+import { DeviceBatchSelect } from "@/components/device-batch-select";
 import { DeviceQr } from "@/components/device-qr";
 import { DeviceStatusActions } from "@/components/device-status-actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
-import { embeddedName } from "@/lib/utils";
+import { embeddedName, embeddedOne, formatDay } from "@/lib/utils";
 import {
   DEVICE_STATUS_LABELS,
   type DeviceStatus,
@@ -38,7 +39,9 @@ export default async function DevicePage({
 
   const { data } = await supabase
     .from("devices")
-    .select("code, type, status, note, project_id, created_at, updated_at, projects(name)")
+    .select(
+      "code, type, status, note, project_id, created_at, updated_at, projects(name), batches(id, code, vendor_name, starts_on, ends_on, vendor_phone)",
+    )
     .eq("code", code)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -55,6 +58,14 @@ export default async function DevicePage({
 
   const projects = (projectData ?? []) as { id: string; name: string }[];
 
+  const { data: batchData } = await supabase
+    .from("batches")
+    .select("id, code")
+    .eq("user_id", user.id)
+    .order("code");
+
+  const batchOptions = (batchData ?? []) as { id: string; code: string }[];
+
   const device = data as {
     code: string;
     type: string;
@@ -62,11 +73,20 @@ export default async function DevicePage({
     note: string | null;
     project_id: string | null;
     projects: unknown;
+    batches: unknown;
     created_at: string;
     updated_at: string;
   };
 
   const projectName = embeddedName(device.projects);
+  const batch = embeddedOne<{
+    id: string;
+    code: string;
+    vendor_name: string;
+    starts_on: string;
+    ends_on: string;
+    vendor_phone: string;
+  }>(device.batches);
 
   return (
     <>
@@ -118,23 +138,85 @@ export default async function DevicePage({
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Update status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DeviceStatusActions
-              code={device.code}
-              status={device.status}
-              projectId={device.project_id}
-              projects={projects}
-            />
-            <p className="mt-4 text-xs text-ink/60">
-              Occupied = out in the field · Available = back in the office ·
-              Damaged = needs repair
-            </p>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Update status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DeviceStatusActions
+                code={device.code}
+                status={device.status}
+                projectId={device.project_id}
+                projects={projects}
+              />
+              <p className="mt-4 text-xs text-ink/60">
+                Occupied = out in the field · Available = back in the office ·
+                Damaged = needs repair
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Batch</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DeviceBatchSelect
+                code={device.code}
+                batchId={batch?.id ?? null}
+                batches={batchOptions}
+              />
+
+              {batch ? (
+                <dl className="mt-4 space-y-2 text-sm">
+                  <div className="flex items-center justify-between gap-4">
+                    <dt className="text-ink/50">Vendor</dt>
+                    <dd className="text-right text-forest-900">
+                      {batch.vendor_name || "—"}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <dt className="text-ink/50">With us</dt>
+                    <dd className="text-right text-forest-900">
+                      {formatDay(batch.starts_on)}
+                      <span className="text-ink/40"> → </span>
+                      {formatDay(batch.ends_on)}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <dt className="text-ink/50">Vendor contact</dt>
+                    <dd>
+                      <a
+                        href={`tel:${batch.vendor_phone.replace(/\s/g, "")}`}
+                        className="font-medium text-brand-700 hover:underline"
+                      >
+                        {batch.vendor_phone}
+                      </a>
+                    </dd>
+                  </div>
+                </dl>
+              ) : null}
+
+              <p className="mt-3 text-xs text-ink/60">
+                {batchOptions.length === 0 ? (
+                  <>
+                    No batches yet.{" "}
+                    <Link
+                      href="/batches/new"
+                      className="font-semibold text-brand-700"
+                    >
+                      Add a batch
+                    </Link>{" "}
+                    to assign this device.
+                  </>
+                ) : (
+                  "Pick the rental batch this device came with."
+                )}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
         <Card className="lg:w-72">
           <CardHeader>

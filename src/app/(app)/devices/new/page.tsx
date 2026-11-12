@@ -21,6 +21,14 @@ export default async function NewDevicePage() {
 
   const projects = (data ?? []) as { id: string; name: string }[];
 
+  const { data: batchData } = await supabase
+    .from("batches")
+    .select("id, code")
+    .eq("user_id", user.id)
+    .order("code");
+
+  const batches = (batchData ?? []) as { id: string; code: string }[];
+
   return (
     <>
       <Link
@@ -37,7 +45,7 @@ export default async function NewDevicePage() {
         description="Register a device, print its QR label, and stick the label on the hardware. The QR opens this device's page when scanned."
       />
 
-      <NewDeviceForm projects={projects} />
+      <NewDeviceForm projects={projects} batches={batches} />
     </>
   );
 }

@@ -17,7 +17,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { requireUser } from "@/lib/auth";
-import { embeddedName } from "@/lib/utils";
+import { embeddedName, embeddedOne } from "@/lib/utils";
 import {
   DEVICE_STATUS_LABELS,
   DEVICE_STATUS_OPTIONS,
@@ -36,7 +36,9 @@ type DeviceRow = {
   type: string;
   status: string;
   note: string | null;
+  project_id: string | null;
   projects: unknown;
+  batches: unknown;
 };
 
 const STATUS_BADGE: Record<DeviceStatus, "green" | "lime" | "danger"> = {
@@ -48,16 +50,25 @@ const STATUS_BADGE: Record<DeviceStatus, "green" | "lime" | "danger"> = {
 export default async function DevicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; project?: string }>;
 }) {
   const { supabase, user } = await requireUser();
   const params = await searchParams;
   const query = (params.q ?? "").trim().toUpperCase();
   const statusFilter = params.status ?? "";
+  const projectFilter = params.project ?? "";
+
+  const { data: projectData } = await supabase
+    .from("projects")
+    .select("id, name")
+    .eq("user_id", user.id)
+    .order("name");
+
+  const projects = (projectData ?? []) as { id: string; name: string }[];
 
   const { data } = await supabase
     .from("devices")
-    .select("code, type, status, note, projects(name)")
+    .select("code, type, status, note, project_id, projects(name), batches(code)")
     .eq("user_id", user.id)
     .order("code")
     .limit(500);
@@ -72,6 +83,14 @@ export default async function DevicesPage({
 
   const filtered = devices.filter((device) => {
     if (statusFilter && device.status !== statusFilter) return false;
+    if (projectFilter === "none" && device.project_id) return false;
+    if (
+      projectFilter &&
+      projectFilter !== "none" &&
+      device.project_id !== projectFilter
+    ) {
+      return false;
+    }
     if (
       query &&
       !device.code.includes(query) &&
@@ -142,8 +161,14 @@ export default async function DevicesPage({
 
       <form
         method="get"
-        className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center"
+        className="mb-4 grid gap-2 sm:grid-cols-[1fr_11rem_11rem_auto] sm:items-center"
       >
+        {statusFilter ? (
+          <input type="hidden" name="status" value={statusFilter} />
+        ) : null}
+        {projectFilter ? (
+          <input type="hidden" name="project" value={projectFilter} />
+        ) : null}
         <div className="relative flex-1">
           <QrCode className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/35" />
           <Input
@@ -160,7 +185,22 @@ export default async function DevicesPage({
           options={DEVICE_STATUS_OPTIONS}
           placeholder="All statuses"
           ariaLabel="Filter by status"
-          className="sm:w-44"
+          className="w-full"
+        />
+        <AutoSubmitThemedSelect
+          name="project"
+          value={projectFilter}
+          options={[
+            { value: "", label: "All projects" },
+            { value: "none", label: "No project" },
+            ...projects.map((project) => ({
+              value: project.id,
+              label: project.name,
+            })),
+          ]}
+          placeholder="All projects"
+          ariaLabel="Filter by project"
+          className="w-full"
         />
         <button type="submit" className="sr-only">
           Search
@@ -200,6 +240,7 @@ export default async function DevicesPage({
                     <th className="w-20 px-3 py-3" />
                     <th className="px-5 py-3 text-center font-semibold">Device ID</th>
                     <th className="px-5 py-3 text-center font-semibold">Type</th>
+                    <th className="px-5 py-3 text-center font-semibold">Batch</th>
                     <th className="px-5 py-3 text-center font-semibold">Project</th>
                     <th className="px-5 py-3 text-center font-semibold">Status</th>
                     <th className="w-20 px-3 py-3" />
@@ -236,6 +277,9 @@ export default async function DevicesPage({
                           </p>
                         ) : null}
                       </td>
+                      <td className="truncate px-5 py-3.5 text-center font-mono text-xs text-ink/55">
+                        {embeddedOne<{ code: string }>(device.batches)?.code ?? "—"}
+                      </td>
                       <td className="truncate px-5 py-3.5 text-center text-sm text-ink/55">
                         {embeddedName(device.projects) ?? "—"}
                       </td>
@@ -264,6 +308,9 @@ export default async function DevicesPage({
               {filtered.map((device) => {
                 const Icon = deviceTypeIcon(device.type);
                 const project = embeddedName(device.projects);
+                const batch = embeddedOne<{ code: string }>(
+                  device.batches,
+                )?.code;
                 return (
                 <li key={device.code}>
                   <Link
@@ -279,6 +326,7 @@ export default async function DevicesPage({
                       </p>
                       <p className="mt-1 truncate text-[11px] text-ink/45">
                         {device.type}
+                        {batch ? ` · ${batch}` : ""}
                       </p>
                       {project ? (
                         <p className="mt-0.5 truncate text-[11px] font-medium text-brand-700">

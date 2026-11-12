@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth";
+import { embeddedOne } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Device labels",
@@ -27,7 +28,7 @@ export default async function DeviceLabelsPage({
 
   let query = supabase
     .from("devices")
-    .select("code")
+    .select("code, batches(code)")
     .eq("user_id", user.id)
     .order("code")
     .limit(500);
@@ -37,7 +38,7 @@ export default async function DeviceLabelsPage({
   }
 
   const { data } = await query;
-  const devices = (data ?? []) as { code: string }[];
+  const devices = (data ?? []) as { code: string; batches: unknown }[];
 
   return (
     <>
@@ -49,9 +50,10 @@ export default async function DeviceLabelsPage({
   main { padding-left: 0 !important; }
   .app-shell { padding: 0 !important; min-height: 0 !important; display: block !important; }
   .print-labels { display: grid !important; grid-template-columns: repeat(auto-fill, 40mm); gap: 6mm; padding: 6mm !important; justify-content: space-evenly; align-content: start; background: #fff !important; }
-  .print-label { width: 40mm !important; height: 40mm !important; break-inside: avoid; page-break-inside: avoid; padding: 2mm !important; gap: 1mm !important; }
+  .print-label { width: 40mm !important; height: 40mm !important; break-inside: avoid; page-break-inside: avoid; padding: 1.5mm !important; gap: 0.75mm !important; }
   .print-label img:first-of-type { width: 22mm !important; height: 22mm !important; }
-  .print-label img:last-of-type { width: 20mm !important; height: auto !important; }
+  .print-label img:last-of-type { width: 18mm !important; height: auto !important; }
+  .print-label p { line-height: 1.1 !important; }
 }`,
         }}
       />
@@ -89,18 +91,25 @@ export default async function DeviceLabelsPage({
         </Card>
       ) : (
         <div className="print-labels grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {devices.map((device) => (
-            <div
-              key={device.code}
-              className="print-label flex flex-col items-center gap-2 rounded-xl border border-forest-900/15 bg-white py-4 text-center"
-            >
-              <DeviceQr code={device.code} size={110} />
-              <p className="font-mono text-sm font-bold text-forest-900">
-                {device.code}
-              </p>
-              <Logo variant="dark" width={64} />
-            </div>
-          ))}
+          {devices.map((device) => {
+            const batch =
+              embeddedOne<{ code: string }>(device.batches)?.code ?? "";
+            return (
+              <div
+                key={device.code}
+                className="print-label flex flex-col items-center gap-2 rounded-xl border border-forest-900/15 bg-white py-4 text-center"
+              >
+                <DeviceQr code={device.code} size={110} />
+                <p className="font-mono text-sm font-bold text-forest-900">
+                  {device.code}
+                </p>
+                <p className="font-mono text-[9px] uppercase tracking-widest text-ink/45">
+                  {batch}
+                </p>
+                <Logo variant="dark" width={64} />
+              </div>
+            );
+          })}
         </div>
       )}
     </>

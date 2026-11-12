@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Boxes,
   ChevronDown,
   FolderKanban,
   LayoutDashboard,
@@ -11,6 +12,7 @@ import {
   ScanLine,
   Settings,
   Tags,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -32,13 +34,17 @@ const NAV_SECTIONS = [
     label: "Device Operations",
     items: [
       { href: "/devices", label: "Devices", icon: QrCode },
+      { href: "/batches", label: "Batches", icon: Boxes },
       { href: "/devices/scan", label: "Scan Device", icon: ScanLine },
       { href: "/devices/labels", label: "QR Labels", icon: Printer },
     ],
   },
   {
     label: "Projects",
-    items: [{ href: "/projects", label: "Projects", icon: FolderKanban }],
+    items: [
+      { href: "/projects", label: "Projects", icon: FolderKanban },
+      { href: "/employees", label: "Employees", icon: Users },
+    ],
   },
   {
     label: null,
@@ -210,18 +216,32 @@ export function AppSidebar({
 
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-forest-900/10 bg-cream-50/90 px-4 backdrop-blur md:hidden">
         <Logo width={112} />
-        <Link
-          href="/projects"
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition",
-            pathname.startsWith("/projects")
-              ? "bg-brand-50 text-brand-700"
-              : "text-forest-900/60",
-          )}
-        >
-          <FolderKanban className="h-4 w-4" />
-          Projects
-        </Link>
+        <div className="flex items-center gap-1">
+          <Link
+            href="/batches"
+            className={cn(
+              "inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition",
+              pathname.startsWith("/batches")
+                ? "bg-brand-50 text-brand-700"
+                : "text-forest-900/60",
+            )}
+          >
+            <Boxes className="h-4 w-4" />
+            Batches
+          </Link>
+          <Link
+            href="/projects"
+            className={cn(
+              "inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition",
+              pathname.startsWith("/projects")
+                ? "bg-brand-50 text-brand-700"
+                : "text-forest-900/60",
+            )}
+          >
+            <FolderKanban className="h-4 w-4" />
+            Projects
+          </Link>
+        </div>
       </header>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 flex items-end justify-around border-t border-forest-900/10 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 backdrop-blur md:hidden">

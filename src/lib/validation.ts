@@ -145,6 +145,87 @@ export const projectSchema = z.object({
     .max(80, "Project name is too long"),
 });
 
+const dateOnly = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a valid date");
+
+export const batchSchema = z
+  .object({
+    code: z
+      .string()
+      .trim()
+      .min(1, "Give the batch a number")
+      .max(40, "Batch number is too long")
+      .transform((value) => value.toUpperCase()),
+    vendorName: z
+      .string()
+      .trim()
+      .min(1, "Add the vendor's name")
+      .max(120, "Vendor name is too long"),
+    startsOn: dateOnly,
+    endsOn: dateOnly,
+    vendorPhone: z
+      .string()
+      .trim()
+      .min(1, "Add the vendor's contact number")
+      .max(20, "Contact number is too long")
+      .regex(/^[+]?[0-9][0-9\s-]{6,18}$/, "Use a valid contact number"),
+  })
+  .superRefine((data, context) => {
+    if (data.endsOn < data.startsOn) {
+      context.addIssue({
+        code: "custom",
+        path: ["endsOn"],
+        message: "Return date must be after the start date",
+      });
+    }
+  });
+
+export const employeeSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(1, "Give the employee a name")
+      .max(120, "Name is too long"),
+    phone: z
+      .string()
+      .trim()
+      .min(1, "Add a contact number")
+      .max(20, "Contact number is too long")
+      .regex(/^[+]?[0-9][0-9\s-]{6,18}$/, "Use a valid contact number"),
+    joinedOn: dateOnly,
+    isFullTime: z.boolean(),
+    leavesOn: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a valid date")
+      .nullable()
+      .optional(),
+    projectId: z.string().uuid().nullable().optional(),
+  })
+  .superRefine((data, context) => {
+    if (!data.isFullTime && !data.leavesOn) {
+      context.addIssue({
+        code: "custom",
+        path: ["leavesOn"],
+        message: "Add a leaving date, or mark them full time",
+      });
+    }
+
+    if (data.leavesOn && !data.isFullTime && data.leavesOn < data.joinedOn) {
+      context.addIssue({
+        code: "custom",
+        path: ["leavesOn"],
+        message: "Leaving date must be after the joining date",
+      });
+    }
+  });
+
+export const employeeDeploymentSchema = z.object({
+  id: z.string().uuid(),
+  projectId: z.string().uuid().nullable(),
+});
+
 export const deviceSchema = z.object({
   code: z
     .string()
@@ -162,6 +243,7 @@ export const deviceSchema = z.object({
     .min(1, "Choose or enter a device type")
     .max(60, "Type is too long"),
   projectId: z.string().uuid().nullable().optional(),
+  batchId: z.string().uuid("Choose the batch the device arrived in"),
 });
 
 export const deviceStatusSchema = z.object({
@@ -169,6 +251,16 @@ export const deviceStatusSchema = z.object({
   status: z.enum(DEVICE_STATUSES),
   note: optionalText(100),
   projectId: z.string().uuid().nullable().optional(),
+});
+
+export const deviceBatchSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(1)
+    .max(40)
+    .transform((value) => value.toUpperCase()),
+  batchId: z.string().uuid().nullable(),
 });
 
 export const profileSchema = z.object({

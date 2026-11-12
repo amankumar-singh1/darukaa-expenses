@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/lib/auth";
 import {
+  deviceBatchSchema,
   deviceSchema,
   deviceStatusSchema,
   type DeviceStatus,
@@ -74,6 +75,7 @@ export async function createDevice(input: unknown): Promise<DeviceResult> {
     type: data.type,
     status: data.projectId ? "occupied" : "available",
     project_id: data.projectId ?? null,
+    batch_id: data.batchId,
   });
 
   if (error) {
@@ -131,6 +133,42 @@ export async function updateDeviceStatus(input: unknown): Promise<SimpleResult> 
   revalidatePath("/devices");
   revalidatePath(`/devices/${data.code}`);
   revalidatePath("/projects");
+
+  return { ok: true };
+}
+
+export async function updateDeviceBatch(
+  input: unknown,
+): Promise<SimpleResult> {
+  const { supabase, user } = await requireUser();
+  const parsed = deviceBatchSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Check the batch.",
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("devices")
+    .update({ batch_id: parsed.data.batchId })
+    .eq("code", parsed.data.code)
+    .eq("user_id", user.id)
+    .select("code");
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  if (!data?.length) {
+    return { ok: false, error: "Device not found." };
+  }
+
+  revalidatePath("/devices");
+  revalidatePath(`/devices/${parsed.data.code}`);
+  revalidatePath("/batches");
+  revalidatePath("/devices/labels");
 
   return { ok: true };
 }

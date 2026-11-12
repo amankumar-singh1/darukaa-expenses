@@ -16,13 +16,16 @@ import { DEVICE_TYPE_OPTIONS } from "@/lib/validation";
 
 export function NewDeviceForm({
   projects,
+  batches,
 }: {
   projects: { id: string; name: string }[];
+  batches: { id: string; code: string }[];
 }) {
   const router = useRouter();
   const [code, setCode] = useState("");
   const [type, setType] = useState("");
   const [customType, setCustomType] = useState("");
+  const [batchId, setBatchId] = useState("");
   const [deployed, setDeployed] = useState(false);
   const [projectId, setProjectId] = useState("");
   const [error, setError] = useState("");
@@ -31,6 +34,11 @@ export function NewDeviceForm({
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+
+    if (!batchId) {
+      setError("Choose the batch this device arrived in.");
+      return;
+    }
 
     if (deployed && !projectId) {
       setError("Choose the project where the device is already deployed.");
@@ -42,6 +50,7 @@ export function NewDeviceForm({
     const result = await createDevice({
       code,
       type: finalType,
+      batchId,
       projectId: deployed ? projectId : null,
     });
     setPending(false);
@@ -95,6 +104,34 @@ export function NewDeviceForm({
                 />
               </div>
             ) : null}
+          </div>
+
+          <div>
+            <Label htmlFor="batch">Batch</Label>
+            {batches.length === 0 ? (
+              <p className="mt-1.5 rounded-lg border border-forest-900/10 bg-cream-50/60 px-3 py-2 text-xs text-ink/60">
+                No batches yet.{" "}
+                <Link href="/batches" className="font-semibold text-brand-700">
+                  Add a batch
+                </Link>{" "}
+                first — every device belongs to the batch it arrived in.
+              </p>
+            ) : (
+              <ThemedSelect
+                id="batch"
+                value={batchId}
+                onChange={setBatchId}
+                options={batches.map((batch) => ({
+                  value: batch.id,
+                  label: batch.code,
+                }))}
+                placeholder="Select batch"
+                ariaLabel="Batch"
+              />
+            )}
+            <p className="mt-1.5 text-xs text-ink/60">
+              The rental batch this device arrived with.
+            </p>
           </div>
 
           <div className="rounded-xl border border-forest-900/10 bg-cream-50/60 p-4">
